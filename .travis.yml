@@ -1,0 +1,19 @@
+sudo: required
+services:
+    - docker
+before_install:
+    - docker build -t pchin/react-test -f ./client/Dockerfile.dev ./client
+script:
+    - docker run -e CI=true pchin/react-test npm test -- --coverage
+after_success:
+    - docker build -t pchin/multi-client ./client
+    - docker build -t pchin/multi-nginx ./nginx
+    - docker build -t pchin/multi-server ./server
+    - docker build -t pchin/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push pchin/multi-client
+    - docker push pchin/multi-nginx
+    - docker push pchin/multi-server
+    - docker push pchin/multi-worker
